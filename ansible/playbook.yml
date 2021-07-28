@@ -1,0 +1,59 @@
+---
+# PLAY PARA CONFIGURACAO DA VM
+- hosts: containers
+  name: Configurando a VM
+  remote_user: vagrant
+  become: yes
+  tasks:
+    - name: Ajustando Timezone
+      timezone:
+        name: America/Sao_Paulo
+
+    - name: Gerar Chave SSH
+      openssh_keypair:
+        path: /home/vagrant/.ssh/id_rsa
+        owner: vagrant
+        group: vagrant
+
+    - name: Ajustando o Arquivo de Configuração do Ansible
+      replace:
+        path: /etc/ansible/ansible.cfg
+        regexp: '^#host_key_checking = True'
+        replace: 'host_key_checking = False'
+
+    - name: Instalação de Pacotes
+      apt:
+        update_cache: yes
+        pkg:
+          - vim
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+    
+    - name: Download da Chave PGP do Docker
+      get_url:
+        url: "https://download.docker.com/linux/ubuntu/gpg"
+        dest: /tmp/docker.gpg
+      ignore_errors: yes
+
+    - name: Instalação da Chave PGP do Docker
+      shell: apt-key add /tmp/docker.gpg
+    
+    - name: Add Docker Repo
+      shell: echo "deb https://download.docker.com/linux/ubuntu   focal stable" > /etc/apt/sources.list.d/docker.list
+
+    - name: Update apt-get
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Instalação do Docker
+      apt:
+        update_cache: yes
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+
+    - name: Add Permissão para todos os usuários
+      shell: usermod -aG docker vagrant
