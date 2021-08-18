@@ -55,5 +55,24 @@
           - docker-ce-cli
           - containerd.io
 
+    - name: Instalação de Pacotes adicionais
+      apt:
+        update_cache: yes
+        pkg:
+          - jq
+          - bridge-utils
+
+    - name: Download do Docker Compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 0775
+
+    - name: Criação do Link Simbólico do Docker Compose
+      ansible.builtin.file:
+        src: /usr/local/bin/docker-compose
+        dest: /usr/bin/docker-compose
+        state: link
+
     - name: Add Permissão para todos os usuários
       shell: usermod -aG docker vagrant
